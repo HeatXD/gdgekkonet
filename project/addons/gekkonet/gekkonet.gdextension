@@ -1,0 +1,19 @@
+[configuration]
+
+entry_symbol = "gd_gekkonet_init"
+compatibility_minimum = 4.3
+
+[libraries]
+
+linux.debug.x86_64 = "bin/libgekkonet.linux.debug.x86_64.so"
+linux.release.x86_64 = "bin/libgekkonet.linux.release.x86_64.so"
+linux.debug.arm64 = "bin/libgekkonet.linux.debug.arm64.so"
+linux.release.arm64 = "bin/libgekkonet.linux.release.arm64.so"
+linux.debug.rv64 = "bin/libgekkonet.linux.debug.rv64.so"
+linux.release.rv64 = "bin/libgekkonet.linux.release.rv64.so"
+windows.debug.x86_64 = "bin/libgekkonet.windows.debug.x86_64.dll"
+windows.release.x86_64 = "bin/libgekkonet.windows.release.x86_64.dll"
+macos.debug = "bin/libgekkonet.macos.debug.framework"
+macos.release = "bin/libgekkonet.macos.release.framework"
+android.debug.arm64 = "bin/libgekkonet.android.debug.arm64.so"
+android.release.arm64 = "bin/libgekkonet.android.release.arm64.so"
