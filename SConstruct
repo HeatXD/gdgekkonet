@@ -6,7 +6,7 @@ from pathlib import Path
 
 # Build GekkoNet static library
 def build_gekkonet():
-    base_dir = "gekkonet/gekkolib"
+    base_dir = "GekkoNet/GekkoLib"
     build_dir = os.path.join(base_dir, "build")
     os.makedirs(build_dir, exist_ok=True)
     
