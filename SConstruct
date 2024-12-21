@@ -12,8 +12,10 @@ def build_gekkonet():
     
     # Determine the output library path (platform-specific)
     if os.name == "nt":  # Windows
+        subprocess.run(["dir"], shell=True)
         output_lib = os.path.join(base_dir, "out", "Release", "GekkoNet_STATIC_NO_ASIO.lib")
     else:  # Unix-like
+        subprocess.run(["ls"])
         output_lib = os.path.join(base_dir, "out", "libGekkoNet_STATIC_NO_ASIO.a")
 
     # Check if rebuild is necessary
@@ -26,6 +28,8 @@ def build_gekkonet():
         if all(os.path.getmtime(output_lib) > os.path.getmtime(src) for src in source_files):
             print(f"Skipping build: {output_lib} is up-to-date.")
             return output_lib
+
+
 
     # Run CMake configuration and build
     subprocess.run(["cmake", "..",
