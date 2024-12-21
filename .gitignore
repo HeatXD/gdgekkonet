@@ -12,3 +12,6 @@
 
 # Editors
 .vscode/
+
+# CPP build files
+*.obj
