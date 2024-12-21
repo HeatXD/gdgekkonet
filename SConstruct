@@ -47,7 +47,7 @@ env = SConscript("godot-cpp/SConstruct")
 
 # Build and add GekkoNet
 gekkonet_lib = build_gekkonet()
-env.Append(CPPPATH=["gekkonet/gekkolib/include"])
+env.Append(CPPPATH=["GekkoNet/GekkoLib/include"])
 env.Append(LIBS=[File(gekkonet_lib)])
 
 # Add source files.
