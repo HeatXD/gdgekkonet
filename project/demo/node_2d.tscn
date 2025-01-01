@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3 uid="uid://6itnrs4xlsxw"]
+
+[ext_resource type="Script" path="res://demo/gekko_net.gd" id="1_lbbas"]
+
+[node name="BASE" type="Node2D"]
+
+[node name="Game" type="Node" parent="."]
+script = ExtResource("1_lbbas")
+
+[node name="UI" type="GridContainer" parent="."]
+offset_right = 258.0
+offset_bottom = 136.0
+columns = 2
+
+[node name="LocalPlayerLabel" type="Label" parent="UI"]
+layout_mode = 2
+text = "Local Player :"
+
+[node name="LocalPlayerInput" type="SpinBox" parent="UI"]
+layout_mode = 2
+rounded = true
+alignment = 3
+
+[node name="LocalPortLabel" type="Label" parent="UI"]
+layout_mode = 2
+text = "Local Port :"
+
+[node name="LocalPortInput" type="SpinBox" parent="UI"]
+layout_mode = 2
+max_value = 65535.0
+
+[node name="RemoteAddressLabel" type="Label" parent="UI"]
+layout_mode = 2
+text = "Remote Address :"
+
+[node name="RemoteAddressInput" type="LineEdit" parent="UI"]
+layout_mode = 2
+placeholder_text = "127.0.0.1:2222"
+expand_to_text_length = true
+
+[node name="SessionButton" type="Button" parent="UI"]
+layout_mode = 2
+toggle_mode = true
+text = "Start Session"
+
+[connection signal="toggled" from="UI/SessionButton" to="Game" method="_on_session_button_toggled"]

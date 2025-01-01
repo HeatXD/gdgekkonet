@@ -7,23 +7,18 @@
 
 using namespace godot;
 
-class GekkoNet : public Node
+class GekkoNetConfig : public RefCounted, public GekkoConfig
 {
-	GDCLASS(GekkoNet, Node);
+	GDCLASS(GekkoNetConfig, RefCounted);
 
 protected:
 	static void _bind_methods();
 
 public:
-	GekkoNet();
-	~GekkoNet();
+	GekkoNetConfig();
+	~GekkoNetConfig();
 
-	void _ready() override;
-	void _process(double delta) override;
-
-
-// GekkoNet Private Functions
-public:
+private:
 	void set_num_players(unsigned char num_players);
 	unsigned char get_num_players();
 
@@ -42,11 +37,31 @@ public:
 	void set_limited_saving(bool limited_saving);
 	bool get_limited_saving();
 
-	void set_spectator_delay(unsigned char delay);
-	unsigned short get_spectator_delay();
+	void set_desync_detection(bool desync_detection);
+	bool get_desync_detection();
 
-// GekkoNet Private Members
+	void set_spectator_delay(unsigned char delay);
+	unsigned char get_spectator_delay();
+};
+
+class GekkoNet : public Object
+{
+	GDCLASS(GekkoNet, Object);
+
+	static GekkoNet* singleton;
+
+protected:
+	static void _bind_methods();
+
+public:
+	static GekkoNet* get_singleton();
+
+	GekkoNet();
+	~GekkoNet();
+
+	void start_session(Ref<GekkoNetConfig> config, int local_port);
+	void stop_session();
+
 private:
 	GekkoSession* _session = nullptr;
-	GekkoConfig _config;
 };

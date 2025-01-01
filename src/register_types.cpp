@@ -4,14 +4,16 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 
+static GekkoNet *_GekkoNet;
+
 void gd_gekkonet_initialize(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
 		ClassDB::register_class<GekkoNet>();
-		// ClassDB::register_class<MySingleton>();
-		// _my_singleton = memnew(MySingleton);
-		// Engine::get_singleton()->register_singleton("MySingleton", MySingleton::get_singleton());
+		ClassDB::register_class<GekkoNetConfig>();
+		_GekkoNet = memnew(GekkoNet);
+		Engine::get_singleton()->register_singleton("GekkoNet", GekkoNet::get_singleton());
 	}
 }
 
@@ -19,8 +21,8 @@ void gd_gekkonet_terminate(ModuleInitializationLevel p_level)
 {
 	if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE)
 	{
-		// Engine::get_singleton()->unregister_singleton("MySingleton");
-		// memdelete(_my_singleton);
+		Engine::get_singleton()->unregister_singleton("GekkoNet");
+		memdelete(_GekkoNet);
 	}
 }
 

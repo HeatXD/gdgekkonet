@@ -13,10 +13,10 @@ def build_gekkonet():
     # Determine the output library path (platform-specific)
     if os.name == "nt":  # Windows
         subprocess.run(["dir"], shell=True)
-        output_lib = os.path.join(base_dir, "out", "Release", "GekkoNet_STATIC_NO_ASIO.lib")
+        output_lib = os.path.join(base_dir, "out", "Release", "GekkoNet_STATIC.lib")
     else:  # Unix-like
         subprocess.run(["ls"])
-        output_lib = os.path.join(base_dir, "out", "libGekkoNet_STATIC_NO_ASIO.a")
+        output_lib = os.path.join(base_dir, "out", "libGekkoNet_STATIC.a")
 
     # Check if rebuild is necessary
     if os.path.exists(output_lib):
@@ -34,7 +34,7 @@ def build_gekkonet():
     # Run CMake configuration and build
     subprocess.run(["cmake", "..",
                     "-DBUILD_SHARED_LIBS=OFF",
-                    "-DNO_ASIO_BUILD=ON",
+                    "-DNO_ASIO_BUILD=OFF",
                     "-DBUILD_DOCS=OFF"],
                    cwd=build_dir, check=True)
     subprocess.run(["cmake", "--build", ".", "--config", "Release"],
