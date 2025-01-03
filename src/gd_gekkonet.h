@@ -59,8 +59,14 @@ public:
 	GekkoNet();
 	~GekkoNet();
 
-	void start_session(Ref<GekkoNetConfig> config, int local_port);
+	void start_session(Ref<GekkoNetConfig> config, unsigned short local_port);
 	void stop_session();
+
+	int add_actor(int player_type, godot::String address);
+	void set_local_delay(int local_player, unsigned char delay);
+	float frames_ahead();
+
+	bool has_session();
 
 private:
 	GekkoSession* _session = nullptr;

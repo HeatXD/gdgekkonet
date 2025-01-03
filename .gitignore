@@ -15,3 +15,6 @@
 
 # CPP build files
 *.obj
+
+src/gd_gekkonet.windows.template_debug.x86_64.obj
+src/register_types.windows.template_debug.x86_64.obj

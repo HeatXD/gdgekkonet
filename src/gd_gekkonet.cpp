@@ -133,9 +133,36 @@ unsigned char GekkoNetConfig::get_spectator_delay()
 
 void GekkoNet::_bind_methods()
 {
+	// METHODS
 	ClassDB::bind_method(D_METHOD("start_session", "config", "local_port"), &GekkoNet::start_session);
 	ClassDB::bind_method(D_METHOD("stop_session"), &GekkoNet::stop_session);
+	ClassDB::bind_method(D_METHOD("add_actor", "player_type", "address"), &GekkoNet::add_actor);
+	ClassDB::bind_method(D_METHOD("set_local_delay", "local_player", "delay"), &GekkoNet::set_local_delay);
+	ClassDB::bind_method(D_METHOD("frames_ahead"), &GekkoNet::frames_ahead);
+	ClassDB::bind_method(D_METHOD("has_session"), &GekkoNet::has_session);
+	
+	// PLAYER TYPE
+	BIND_CONSTANT(LocalPlayer);
+	BIND_CONSTANT(RemotePlayer);
+	BIND_CONSTANT(Spectator);
+
+	// GAME EVENT TYPE
+	BIND_CONSTANT(EmptyGameEvent);
+	BIND_CONSTANT(AdvanceEvent);
+	BIND_CONSTANT(SaveEvent);
+	BIND_CONSTANT(LoadEvent);
+
+	// SESSION EVENT TYPE
+	BIND_CONSTANT(EmptySessionEvent);
+	BIND_CONSTANT(PlayerSyncing);
+	BIND_CONSTANT(PlayerConnected);
+	BIND_CONSTANT(PlayerDisconnected);
+	BIND_CONSTANT(SessionStarted);
+	BIND_CONSTANT(SpectatorPaused);
+	BIND_CONSTANT(SpectatorUnpaused);
+	BIND_CONSTANT(DesyncDetected);
 }
+
 
 GekkoNet *GekkoNet::get_singleton()
 {
@@ -144,27 +171,24 @@ GekkoNet *GekkoNet::get_singleton()
 
 GekkoNet::GekkoNet()
 {
-	ERR_FAIL_COND(singleton != nullptr);
-
+	CRASH_COND(singleton != nullptr);
 	singleton = this;
 }
 
 GekkoNet::~GekkoNet()
 {
-	ERR_FAIL_COND(singleton != this);
+	CRASH_COND(singleton != this);
 	singleton = nullptr;
-
 	stop_session();
 }
 
-void GekkoNet::start_session(Ref<GekkoNetConfig> config, int local_port)
+void GekkoNet::start_session(Ref<GekkoNetConfig> config, unsigned short local_port)
 {
-	ERR_FAIL_COND_MSG(config.is_null(), "GekkoNetConfig is invalid or null");
+	CRASH_COND_MSG(config.is_null(), "GekkoNetConfig is invalid or null");
 	gekko_create(&_session);
 	gekko_start(_session, config.ptr());
 
 	// maybe later allow for custom adapters
-	ERR_FAIL_COND_MSG(local_port < 0 || local_port > 65535, "local_port is invalid");
 	gekko_net_adapter_set(_session, gekko_default_adapter(local_port));
 }
 
@@ -172,4 +196,40 @@ void GekkoNet::stop_session()
 {
 	gekko_destroy(_session);
 	_session = nullptr;
+}
+
+int GekkoNet::add_actor(int player_type, godot::String address)
+{
+	CRASH_COND_MSG(_session == nullptr, "Session is not started");
+
+	// cast to type.
+	auto type = static_cast<GekkoPlayerType>(player_type);
+
+	// no string? well then lets assume its a local player.
+	if (address.is_empty()) {
+		return gekko_add_actor(_session, type, nullptr);
+	}
+
+	// else its a remote player
+	auto addr = address.utf8();
+	auto remote = GekkoNetAddress{ (void*)addr.get_data(), (unsigned int)addr.length() };
+
+    return gekko_add_actor(_session, type, nullptr);
+}
+
+void GekkoNet::set_local_delay(int local_player, unsigned char delay)
+{
+	CRASH_COND_MSG(_session == nullptr, "Session is not started");
+	gekko_set_local_delay(_session, local_player, delay);
+}
+
+float GekkoNet::frames_ahead()
+{
+	CRASH_COND_MSG(_session == nullptr, "Session is not started");
+    return gekko_frames_ahead(_session);
+}
+
+bool GekkoNet::has_session()
+{
+    return _session != nullptr;
 }
