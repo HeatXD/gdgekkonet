@@ -66,8 +66,6 @@ public:
 	void set_local_delay(int local_player, unsigned char delay);
 	float frames_ahead();
 
-	bool has_session();
-
 private:
 	GekkoSession* _session = nullptr;
 };

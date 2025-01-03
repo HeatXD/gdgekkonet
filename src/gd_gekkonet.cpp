@@ -139,7 +139,6 @@ void GekkoNet::_bind_methods()
 	ClassDB::bind_method(D_METHOD("add_actor", "player_type", "address"), &GekkoNet::add_actor);
 	ClassDB::bind_method(D_METHOD("set_local_delay", "local_player", "delay"), &GekkoNet::set_local_delay);
 	ClassDB::bind_method(D_METHOD("frames_ahead"), &GekkoNet::frames_ahead);
-	ClassDB::bind_method(D_METHOD("has_session"), &GekkoNet::has_session);
 	
 	// PLAYER TYPE
 	BIND_CONSTANT(LocalPlayer);
@@ -227,9 +226,4 @@ float GekkoNet::frames_ahead()
 {
 	CRASH_COND_MSG(_session == nullptr, "Session is not started");
     return gekko_frames_ahead(_session);
-}
-
-bool GekkoNet::has_session()
-{
-    return _session != nullptr;
 }
