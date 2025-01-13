@@ -1,8 +1,7 @@
 #include "gd_gekkonet.h"
 
 #include <godot_cpp/core/class_db.hpp>
-
-using namespace godot;
+#include <godot_cpp/variant/utility_functions.hpp>
 
 GekkoNet *GekkoNet::singleton = nullptr;
 
@@ -136,10 +135,13 @@ void GekkoNet::_bind_methods()
 	// METHODS
 	ClassDB::bind_method(D_METHOD("start_session", "config", "local_port"), &GekkoNet::start_session);
 	ClassDB::bind_method(D_METHOD("stop_session"), &GekkoNet::stop_session);
+	ClassDB::bind_method(D_METHOD("update_session_events"), &GekkoNet::update_session_events);
+	ClassDB::bind_method(D_METHOD("update_game_events"), &GekkoNet::update_game_events);
 	ClassDB::bind_method(D_METHOD("add_actor", "player_type", "address"), &GekkoNet::add_actor);
 	ClassDB::bind_method(D_METHOD("set_local_delay", "local_player", "delay"), &GekkoNet::set_local_delay);
 	ClassDB::bind_method(D_METHOD("frames_ahead"), &GekkoNet::frames_ahead);
-	
+	ClassDB::bind_method(D_METHOD("add_local_input", "local_player", "input"), &GekkoNet::add_local_input);
+
 	// PLAYER TYPE
 	BIND_CONSTANT(LocalPlayer);
 	BIND_CONSTANT(RemotePlayer);
@@ -160,9 +162,12 @@ void GekkoNet::_bind_methods()
 	BIND_CONSTANT(SpectatorPaused);
 	BIND_CONSTANT(SpectatorUnpaused);
 	BIND_CONSTANT(DesyncDetected);
+
+	// Callbacks
+	ClassDB::bind_method(D_METHOD("cb_advance_game", "callable"), &GekkoNet::cb_advance_game);
+	ClassDB::bind_method(D_METHOD("cb_load_game", "callable"), &GekkoNet::cb_load_game);
+	ClassDB::bind_method(D_METHOD("cb_save_game", "callable"), &GekkoNet::cb_save_game);
 }
-
-
 GekkoNet *GekkoNet::get_singleton()
 {
 	return singleton;
@@ -183,9 +188,14 @@ GekkoNet::~GekkoNet()
 
 void GekkoNet::start_session(Ref<GekkoNetConfig> config, unsigned short local_port)
 {
-	CRASH_COND_MSG(config.is_null(), "GekkoNetConfig is invalid or null");
+	if (config.is_null())
+		return;
+
 	gekko_create(&_session);
 	gekko_start(_session, config.ptr());
+
+	if (local_port == 0)
+		return;
 
 	// maybe later allow for custom adapters
 	gekko_net_adapter_set(_session, gekko_default_adapter(local_port));
@@ -197,33 +207,141 @@ void GekkoNet::stop_session()
 	_session = nullptr;
 }
 
+void GekkoNet::update_session_events()
+{
+	if (_session == nullptr)
+		return;
+
+	int count = 0;
+	auto events = gekko_session_events(_session, &count);
+
+	for (int i = 0; i < count; i++)
+	{
+		auto ev = events[i];
+		godot::UtilityFunctions::print("Session Event:", ev->type);
+	}
+}
+
+void GekkoNet::update_game_events()
+{
+	if (_session == nullptr)
+		return;
+
+	int count = 0;
+	auto updates = gekko_update_session(_session, &count);
+
+	for (int i = 0; i < count; i++)
+	{
+		auto ev = updates[i];
+		godot::PackedByteArray data_arr;
+
+		switch (ev->type)
+		{
+		case AdvanceEvent:
+			if (on_advance_game.is_null())
+				break;
+			data_arr.resize(ev->data.adv.input_len);
+			memcpy(data_arr.ptrw(), ev->data.adv.inputs, ev->data.adv.input_len);
+			on_advance_game.call(data_arr);
+			break;
+		case SaveEvent:
+			if (on_save_game.is_null())	
+				break;
+			handle_save_event(&ev->data.save);
+			break;
+		case LoadEvent:
+			if (on_load_game.is_null())
+				break;
+			data_arr.resize(ev->data.load.state_len);
+			memcpy(data_arr.ptrw(), ev->data.load.state, ev->data.load.state_len);
+			on_load_game.call(data_arr);
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 int GekkoNet::add_actor(int player_type, godot::String address)
 {
-	CRASH_COND_MSG(_session == nullptr, "Session is not started");
+	if (_session == nullptr)
+		return -1;
 
 	// cast to type.
 	auto type = static_cast<GekkoPlayerType>(player_type);
 
 	// no string? well then lets assume its a local player.
-	if (address.is_empty()) {
+	if (address.is_empty())
 		return gekko_add_actor(_session, type, nullptr);
-	}
 
 	// else its a remote player
 	auto addr = address.utf8();
-	auto remote = GekkoNetAddress{ (void*)addr.get_data(), (unsigned int)addr.length() };
+	auto remote = GekkoNetAddress{(void *)addr.get_data(), (unsigned int)addr.length()};
 
-    return gekko_add_actor(_session, type, nullptr);
+	return gekko_add_actor(_session, type, &remote);
 }
 
 void GekkoNet::set_local_delay(int local_player, unsigned char delay)
 {
-	CRASH_COND_MSG(_session == nullptr, "Session is not started");
+	if (_session == nullptr)
+		return;
 	gekko_set_local_delay(_session, local_player, delay);
 }
 
 float GekkoNet::frames_ahead()
 {
-	CRASH_COND_MSG(_session == nullptr, "Session is not started");
-    return gekko_frames_ahead(_session);
+	if (_session == nullptr)
+		return 0.f;
+	return gekko_frames_ahead(_session);
+}
+
+void GekkoNet::cb_advance_game(godot::Callable callable)
+{
+	on_advance_game = callable;
+}
+
+void GekkoNet::cb_load_game(godot::Callable callable)
+{
+	on_load_game = callable;
+}
+
+void GekkoNet::cb_save_game(godot::Callable callable)
+{
+	on_save_game = callable;
+}
+
+void GekkoNet::handle_save_event(GekkoGameEvent::EventData::Save *event)
+{
+	// Create an array to store the return values
+	if (on_save_game.is_null())
+		return;
+
+	Variant result = on_save_game.call(event->frame);
+	if (result.get_type() == Variant::DICTIONARY)
+	{
+		godot::Dictionary save_info = result;
+
+		if (save_info.has("checksum") && save_info["checksum"].get_type() == Variant::INT)
+			*event->checksum = (int)save_info["checksum"];
+
+		if (save_info.has("state_len") && save_info["state_len"].get_type() == Variant::INT)
+			*event->state_len = (int)save_info["state_len"];
+		else
+			ERR_PRINT("No state_len supplied into savestates");
+
+		if (save_info.has("state") && save_info["state"].get_type() == Variant::PACKED_BYTE_ARRAY)
+		{
+			godot::PackedByteArray state = save_info["state"];
+			memcpy(event->state, state.ptr(), state.size());
+		}
+		else
+			ERR_PRINT("No state supplied into savestates");
+	}
+}
+
+void GekkoNet::add_local_input(int local_player, godot::PackedByteArray input)
+{
+	if (_session == nullptr || local_player == -1 || input.is_empty())
+		return;
+	gekko_add_local_input(_session, local_player, (void *)input.ptr());
 }

@@ -48,13 +48,13 @@ class GekkoNet : public Object
 {
 	GDCLASS(GekkoNet, Object);
 
-	static GekkoNet* singleton;
+	static GekkoNet *singleton;
 
 protected:
 	static void _bind_methods();
 
 public:
-	static GekkoNet* get_singleton();
+	static GekkoNet *get_singleton();
 
 	GekkoNet();
 	~GekkoNet();
@@ -62,10 +62,28 @@ public:
 	void start_session(Ref<GekkoNetConfig> config, unsigned short local_port);
 	void stop_session();
 
+	void update_session_events();
+	void update_game_events();
+
 	int add_actor(int player_type, godot::String address);
+
 	void set_local_delay(int local_player, unsigned char delay);
+	void add_local_input(int local_player, godot::PackedByteArray input);
+
 	float frames_ahead();
 
+	// callbacks
+	void cb_advance_game(godot::Callable callable);
+	void cb_load_game(godot::Callable callable);
+	void cb_save_game(godot::Callable callable);
+
 private:
-	GekkoSession* _session = nullptr;
+	void handle_save_event(GekkoGameEvent::EventData::Save *event);
+
+private:
+	GekkoSession *_session = nullptr;
+
+	godot::Callable on_advance_game;
+    godot::Callable on_load_game;
+    godot::Callable on_save_game;
 };

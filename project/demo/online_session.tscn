@@ -1,11 +1,27 @@
-[gd_scene load_steps=2 format=3 uid="uid://6itnrs4xlsxw"]
+[gd_scene load_steps=4 format=3 uid="uid://bl828osdgsgvf"]
 
-[ext_resource type="Script" path="res://demo/gekko_net.gd" id="1_lbbas"]
+[ext_resource type="Script" path="res://demo/gekko_net_online.gd" id="1_n6208"]
+[ext_resource type="Texture2D" uid="uid://d370wt6felklx" path="res://icon.svg" id="2_bhw26"]
 
-[node name="BASE" type="Node2D"]
+[sub_resource type="LabelSettings" id="LabelSettings_emndr"]
+font_size = 32
+
+[node name="OnlineSession" type="Node2D"]
 
 [node name="Game" type="Node" parent="."]
-script = ExtResource("1_lbbas")
+script = ExtResource("1_n6208")
+
+[node name="Players" type="Node" parent="Game"]
+
+[node name="0" type="Sprite2D" parent="Game/Players"]
+modulate = Color(0, 0, 0, 1)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_bhw26")
+
+[node name="1" type="Sprite2D" parent="Game/Players"]
+modulate = Color(100, 100, 100, 1)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_bhw26")
 
 [node name="UI" type="GridContainer" parent="."]
 offset_right = 258.0
@@ -42,5 +58,15 @@ expand_to_text_length = true
 layout_mode = 2
 toggle_mode = true
 text = "Start Session"
+
+[node name="FPSLabel" type="Label" parent="."]
+offset_left = 1069.0
+offset_top = 1.0
+offset_right = 1154.0
+offset_bottom = 86.0
+text = "##"
+label_settings = SubResource("LabelSettings_emndr")
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [connection signal="toggled" from="UI/SessionButton" to="Game" method="_on_session_button_toggled"]
